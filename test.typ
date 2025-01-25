@@ -1,10 +1,11 @@
-#let dot_radius = 0.5em
+#let dot_radius = 0.4em
 #let dot_stroke = 0.1em
 #let dot_spacing = 0.3em
-#let half_spacing = 0em
-#let tab_group_spacing = 1em
+#let half_spacing = 0.4em
 #let tab_spacing = 0.7em
 #let tuning = "d"
+#let show_notes = true
+#let show_pitch = true
 
 #let draw_tab(tab) = {
   assert(type(tab) == str, message: "Expected string, got " + type(tab))
@@ -52,8 +53,10 @@
   let pitch_octave = pitch.trim(regex("[^+]"))
 
   block(
-    width: (dot_radius) * 2 + dot_stroke + tab_spacing, stack(
-      text(size: 2em, note_duration.at(duration)), v(8pt), tabs.at(pitch), pitch_octave, pitch_note,
+    width: (dot_radius) * 2 + dot_stroke + tab_spacing, align(
+      center, stack(
+        text(size: 2em, if show_notes { note_duration.at(duration) }), v(8pt), tabs.at(pitch), pitch_octave, if show_pitch { pitch_note },
+      ),
     ),
   )
 }
@@ -63,15 +66,49 @@
   let tab_groups = tabs.trim(regex("\s")).split(regex("\s{2,}"))
   let notes = tabs.trim(regex("\s")).split(regex("\s+"))
 
-  stack(dir: ltr, spacing: tab_group_spacing, ..for tab_group in tab_groups {
+  for (i, tab_group) in tab_groups.enumerate() {
     let notes = tab_group.split(regex("\s+"))
-    (block(align(center, stack(dir: ltr, ..for note in notes {
+
+    box(stack(dir: ltr, ..for note in notes {
       (show_note(note),)
-    }))),)
-  })
+    }))
+    h(2 * dot_radius + dot_stroke + tab_spacing, weak: true)
+  }
 }
 
-#show_tabs("1d 1d# 1e 1f 1f# 1g 1g# 1a 1a# 1b 1c 1c# 1D+ 1D#+ 1E+")
+#let song(name, author: none, rythm: none, bpm: none) = {
+  align(center, text(size: 1.5em, heading(name, depth: 1)))
+
+  grid(
+    align: horizon, columns: (4em, 2em, 1fr, auto), circle(text(size: 1.5em, strong(upper(tuning)))), if rythm != none {
+      text(size: 1.5em, strong(stack(str(rythm.at(0)), str(rythm.at(1)))))
+    }, if bpm != none and rythm != none {
+      let bpm_unit = ("2": "𝅗𝅥", "4": "𝅘𝅥", "6": "𝅘𝅥.", "8": "𝅘𝅥𝅮")
+      text(size: 1.5em, bpm_unit.at(str(rythm.at(1)))) + " = " + str(bpm) + " bpm"
+    }, if author != none {
+      author
+    },
+  )
+}
+
+#song("Basic Scale")
+#show_tabs("d e f# g a b c#
+            d+ e+ f#+ g+ a+ b+ c#+
+            d++ e++ f#++ g++")
+
+#song("Extended Scale")
+#show_tabs("d d# e f f# g  g# a a# b c c#
+            D+ D#+ E+ F+ F#+ G+  G#+ A+ A#+ B+ C+ C#+
+            D++ E++ F#++ G++")
+
+#pagebreak()
+
+#song("Rake Hornpipe", author: "Robert White", rythm: (6, 8), bpm: 120)
+
 #show_tabs(
-  "1F+ 1F#+ 1G+ 1G#+ 1A+ 1A#+ 1B+ 1C+ 1C#+ 1D++ 1E++ 1F#++ 1G++  1d 2d 4d 8d d d d  d  d d d a a a",
+  "8D+ 8c# 8c    4b 8g 4d 8g    4b 8g 4D+ 8b    8G+ 8F#+ 8G+ 8A+ 8G+ 8F#+
+   4G+ 8D+ 4b 8g    4f# 8e 4f# 8g    4a 8b 8c 8b 8a    4D+ 8c# 4D+ 8E+
+   4F#+ 8D+ 4c 8a    4b 8g 4d 8g    4b 8g 4D+ 8b    8G+ 8F#+ 8G+ 8A+ 8G+ 8F#+
+   4G+ 8D+ 4b 8g    8b 8c 8D+ 4G+ 8D+    4c 8a 4f# 8g    4a 8g 4g 8f#",
 )
+
